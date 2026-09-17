@@ -1,0 +1,65 @@
+name: Time Clock checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: timeclock
+          POSTGRES_PASSWORD: local-only
+          POSTGRES_DB: timeclock
+        ports: ['5548:5432']
+        options: >-
+          --health-cmd "pg_isready -U timeclock"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      APP_ENV: test
+      DEMO_MODE: 'true'
+      DATABASE_URL: postgresql://timeclock:local-only@127.0.0.1:5548/timeclock
+      PROXY_SECRET: ci-proxy-secret
+      ALLOWED_EMAIL_DOMAINS: pathwaybook.com
+      API_BASE_URL: http://127.0.0.1:8018
+      APP_ORIGIN: http://localhost:3010
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: pip install -r api/requirements-dev.txt -c api/constraints.txt
+      - run: python -m ruff check app tests && python -m ruff format --check app tests && python -m pytest -q
+        working-directory: api
+      - run: npm ci && npm run typecheck && npm run build
+        working-directory: web
+      - run: npx playwright install --with-deps chromium
+        working-directory: web
+      - name: Start isolated preview
+        run: |
+          cd api
+          python -m app.migrate
+          python -m app.seed
+          python -m uvicorn app.main:app --host 127.0.0.1 --port 8018 > /tmp/timeclock-api.log 2>&1 &
+          cd ../web
+          npm run start > /tmp/timeclock-web.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:3010/api/config; then exit 0; fi
+            sleep 2
+          done
+          exit 1
+      - run: npm run test:browser
+        working-directory: web
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-evidence
+          path: |
+            artifacts/
+            web/test-results/
