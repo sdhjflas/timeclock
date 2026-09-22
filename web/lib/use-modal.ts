@@ -12,7 +12,7 @@ export function useModal(open: boolean, onClose: () => void) {
     const focusable = () =>
       Array.from(
         dialog.querySelectorAll<HTMLElement>(
-          "button:not(:disabled), input, select, textarea, a[href]",
+          "button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href]",
         ),
       );
     focusable()[0]?.focus();

@@ -249,6 +249,7 @@ export function Admin({ demo }: { demo: boolean }) {
                     </label>
                     <button
                       className="button secondary"
+                      disabled={!exportStart || !exportEnd}
                       onClick={() => {
                         setSelected(undefined);
                         setPeriodQuery(
@@ -261,7 +262,7 @@ export function Admin({ demo }: { demo: boolean }) {
                   </div>
                   <button
                     className="button secondary"
-                    disabled={busy}
+                    disabled={busy || !exportStart || !exportEnd}
                     onClick={() =>
                       void act(async () => {
                         const response = await fetch(

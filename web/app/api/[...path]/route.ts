@@ -52,7 +52,7 @@ async function handler(
   if (endpoint === "demo-user" && request.method === "POST") {
     if (!demo)
       return NextResponse.json({ detail: "Not found" }, { status: 404 });
-    const body = await request.json();
+    const body = await request.json().catch(() => ({}));
     if (!["1001", "1002", "1003"].includes(body.code))
       return NextResponse.json(
         { detail: "Unknown preview user" },

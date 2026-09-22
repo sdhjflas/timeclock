@@ -130,6 +130,22 @@ def test_revoked_station_and_expired_session(client, station, manager_headers):
     assert client.get("/v1/kiosk/station", headers=station).status_code == 403
 
 
+def test_stale_kiosk_sessions_are_purged_on_next_verify(client, station):
+    login(client, station)
+    with transaction() as conn:
+        conn.execute(
+            "UPDATE timeclock.kiosk_sessions SET expires_at=clock_timestamp()-interval '2 days'"
+        )
+    login(client, station, "1003")
+    with transaction() as conn:
+        assert (
+            conn.execute("SELECT count(*) n FROM timeclock.kiosk_sessions").fetchone()[
+                "n"
+            ]
+            == 1
+        )
+
+
 def test_pin_lockout_persists_and_blocks_correct_pin(client, station):
     for _ in range(5):
         assert (

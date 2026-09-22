@@ -265,6 +265,11 @@ def verify(body: Pin, request: Request):
                 "UPDATE timeclock.terminals SET failed_attempts=0, locked_until=NULL WHERE id=%s",
                 (device["id"],),
             )
+            # Opportunistic cleanup so long-dead sessions do not accumulate forever.
+            conn.execute(
+                "DELETE FROM timeclock.kiosk_sessions WHERE expires_at < %s - interval '1 day'",
+                (timestamp,),
+            )
             shift = conn.execute(
                 "SELECT * FROM timeclock.shifts WHERE employee_id=%s AND ended_at IS NULL",
                 (employee["id"],),

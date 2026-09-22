@@ -21,6 +21,14 @@ export default function RootLayout({
       className={`${GeistSans.variable} ${GeistMono.variable}`}
       suppressHydrationWarning
     >
+      <head>
+        {/* Apply the stored theme before first paint to avoid a light-mode flash. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{if(localStorage.getItem("pbs-theme")==="dark")document.documentElement.classList.add("dark")}catch(e){}`,
+          }}
+        />
+      </head>
       <body>{children}</body>
     </html>
   );

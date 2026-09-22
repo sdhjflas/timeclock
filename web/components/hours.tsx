@@ -70,6 +70,7 @@ export function Hours({ demo }: { demo: boolean }) {
     void load();
   }, [load]);
   const zone = settings?.timezone || "America/New_York";
+  const week = !settings || settings.period_days === 7;
   const shiftPeriod = (direction: number) => {
     if (!report || !settings) return;
     const start = format(
@@ -137,22 +138,24 @@ export function Hours({ demo }: { demo: boolean }) {
                     ),
                   )}
                 </strong>
-                <span className="pill neutral">Weekly pay period</span>
+                <span className="pill neutral">
+                  {week ? "Weekly" : "Biweekly"} pay period
+                </span>
               </div>
               <div>
                 <button
                   className="icon-button"
-                  aria-label="Previous week"
+                  aria-label={week ? "Previous week" : "Previous period"}
                   onClick={() => shiftPeriod(-1)}
                 >
                   <ChevronLeft size={18} />
                 </button>
                 <button className="text-link" onClick={() => setRange("")}>
-                  This week
+                  {week ? "This week" : "This period"}
                 </button>
                 <button
                   className="icon-button"
-                  aria-label="Next week"
+                  aria-label={week ? "Next week" : "Next period"}
                   onClick={() => shiftPeriod(1)}
                 >
                   <ChevronRight size={18} />
@@ -197,7 +200,7 @@ export function Hours({ demo }: { demo: boolean }) {
             <section className="panel">
               <div className="section-heading">
                 <div>
-                  <h2>Your week at a glance</h2>
+                  <h2>Your {week ? "week" : "pay period"} at a glance</h2>
                   <p>Completed hours each day</p>
                 </div>
                 <span className="chart-legend">
@@ -267,8 +270,8 @@ export function Hours({ demo }: { demo: boolean }) {
                 )}
               </div>
               <div className="table-note">
-                Shift durations show the whole shift. Weekly totals include only
-                time inside the selected period.
+                Shift durations show the whole shift. Totals include only time
+                inside the selected period.
               </div>
             </section>
             {requests.length > 0 && (

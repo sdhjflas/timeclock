@@ -4,11 +4,11 @@ export async function api<T>(path: string, options?: RequestInit): Promise<T> {
     cache: "no-store",
     headers: { "Content-Type": "application/json", ...options?.headers },
   });
-  const body = await response.json();
-  if (!response.ok) {
-    const message = Array.isArray(body.detail)
+  const body = await response.json().catch(() => null);
+  if (!response.ok || body === null) {
+    const message = Array.isArray(body?.detail)
       ? body.detail.map((e: { msg: string }) => e.msg).join(". ")
-      : body.detail;
+      : body?.detail;
     throw new Error(message || "Something went wrong. Please try again.");
   }
   return body;
